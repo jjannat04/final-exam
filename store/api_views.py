@@ -121,22 +121,46 @@ class ReviewCreateAPI(generics.CreateAPIView):
 
 class OrderCreateAPI(generics.CreateAPIView):
     """
-    Create an order
+    Create an order and send a detailed confirmation email
     """
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
+
     def perform_create(self, serializer):
+        # 1. Save order with the authenticated user
         order = serializer.save(user=self.request.user)
 
-        send_mail(
-            "Order Confirmation",
-            f"Your order #{order.id} has been successfully placed.",
-            settings.EMAIL_HOST_USER,
-            [self.request.user.email],
-            fail_silently=True,
+        # 2. Build a list of items for the email
+        # Assuming your Order model has an 'items' related_name or similar
+        item_summary = ""
+        # If your OrderItem model has a 'product' field with a 'name'
+        for item in order.items.all():
+            item_summary += f"- {item.product.name} (Qty: {item.quantity})\n"
+
+        # 3. Prepare Email Content
+        subject = f"Order Confirmed! Dhaka Threads #{order.id}"
+        body = (
+            f"Hi {self.request.user.username},\n\n"
+            f"Success! Your order #{order.id} has been placed.\n\n"
+            f"Order Details:\n"
+            f"{item_summary}\n"
+            f"Total: {order.total_amount} BDT\n"
+            f"Shipping to: {order.address}\n\n"
+            f"Thank you for shopping with Dhaka Threads!"
         )
 
+        # 4. Send the Mail
+        try:
+            send_mail(
+                subject,
+                body,
+                settings.EMAIL_HOST_USER,
+                [self.request.user.email],
+                fail_silently=False, # Set to False to see errors in terminal
+            )
+        except Exception as e:
+            print(f"Email Error: {e}")
 
 class OrderListAPI(generics.ListAPIView):
     """

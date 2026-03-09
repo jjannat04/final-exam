@@ -42,12 +42,23 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    
+    
+    user = serializers.ReadOnlyField(source='user.username')
 
     class Meta:
         model = Order
-        fields = "__all__"
+        fields = ['id', 'user', 'total_amount', 'address', 'full_name', 'items', 'created_at']
 
-        
+# serializers.py
+class OrderSerializer(serializers.ModelSerializer):
+    # This tells DRF: "Don't expect this in the React POST body, 
+    # the backend will handle it."
+    user = serializers.ReadOnlyField(source='user.username') 
+
+    class Meta:
+        model = Order
+        fields = ['id', 'user', 'total_amount', 'address', 'full_name', 'items', 'created_at']        
 from .models import Wishlist
 
 
