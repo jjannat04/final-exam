@@ -392,17 +392,45 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_exempt
+
+
+
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def payment_success(request):
-    # Log the data to your console so you can see what SSLCOMMERZ sent
-    print("Payment Data:", request.data)
+    payment_data = request.data
+    transaction_id = payment_data.get('tran_id')
     
-    # TODO: Add logic here to update your Order status in the database
-    # Example: tran_id = request.data.get('tran_id')
+    try:
+        from store.models import Order
+        order = Order.objects.get(transaction_id=transaction_id)
+        order.status = 'Paid' # Update your status field
+        order.save()
+
+        # --- STEP 2: SEND ORDER CONFIRMATION EMAIL ---
+        subject = f"Order Confirmed - {transaction_id}"
+        message = f"Hi {order.user.username},\n\nThank you for shopping with Dhaka Threads! We've received your payment.\n\nTransaction ID: {transaction_id}\nTotal Amount: {order.total_amount}\n\nYou can track your order status in your dashboard."
+        
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER, # Your Gmail/SMTP email
+            [order.user.email],       # The customer's email
+            fail_silently=False,
+        )
+        print(f"Confirmation email sent to {order.user.email}")
+
+    except Order.DoesNotExist:
+        print("Order not found for this transaction.")
     
-    return Response({"message": "Payment successful"})
+    # (Step 1 Redirect will go here later)
+    return Response({"message": "Payment processed and email sent."})
     
 
 @csrf_exempt
