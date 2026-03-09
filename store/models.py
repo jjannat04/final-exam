@@ -42,6 +42,7 @@ class Product(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = (
         ('Pending', 'Pending'),
+        ('Paid', 'Paid'),
         ('Shipped', 'Shipped'),
         ('Delivered', 'Delivered'),
     )

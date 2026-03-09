@@ -403,28 +403,27 @@ from django.views.decorators.csrf import csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def payment_success(request):
-    payment_data = request.data
-    # SSLCommerz sends the ID we gave them back as 'tran_id'
-    order_id = payment_data.get('tran_id') 
-    
+
+    tran_id = request.data.get("tran_id") or request.GET.get("tran_id")
+
+    if not tran_id:
+        return Response({"error": "Transaction ID missing"}, status=400)
+
+    order_id = tran_id.replace("ORDER_", "")
+
     try:
-        from store.models import Order
-        # Change 'transaction_id' to 'id' here
-        order = Order.objects.get(id=order_id) 
-        
-        # Mark as paid and update status
-        order.is_paid = True
-        order.status = 'Paid'
-        order.save()
-
-        # ... (Step 2 Email logic here) ...
-
-    except (Order.DoesNotExist, ValueError):
-        # Handle case where order_id isn't a valid number or not in DB
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
         return Response({"error": "Order not found"}, status=404)
 
-    # Step 1: Redirect back to React
-    return redirect(f"https://your-react-app.vercel.app/payment/success?tran_id={order_id}")
+    order.status = "Paid"
+    order.save()
+
+    return Response({
+        "message": "Payment successful",
+        "order_id": order.id
+    })
+
 
 @csrf_exempt
 @api_view(['POST', 'GET'])
