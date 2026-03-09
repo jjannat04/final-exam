@@ -384,3 +384,10 @@ def create_payment(request):
             "error": "Failed to initialize payment",
             "failed_reason": payment_data.get("failedreason")
         }, status=400)
+    
+# store/api_views.py
+
+@api_view(["POST"])
+def payment_success(request):
+    # ... your code ...
+    return Response({"message": "Payment successful"})    
