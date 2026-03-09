@@ -59,8 +59,11 @@ class AdminDashboardAPI(APIView):
             created_at__month=now.month
         ).aggregate(total=Sum("total_amount"))
 
+        first_day_of_current_month = now.replace(day=1)
+        last_day_of_prev_month = first_day_of_current_month - timedelta(days=1)
         previous_month_sales = Order.objects.filter(
-            created_at__month=now.month - 1
+            created_at__year=last_day_of_prev_month.year,
+            created_at__month=last_day_of_prev_month.month
         ).aggregate(total=Sum("total_amount"))
 
         return Response({
