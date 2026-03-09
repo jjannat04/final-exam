@@ -399,39 +399,32 @@ from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import csrf_exempt
 
 
-
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def payment_success(request):
     payment_data = request.data
-    transaction_id = payment_data.get('tran_id')
+    # SSLCommerz sends the ID we gave them back as 'tran_id'
+    order_id = payment_data.get('tran_id') 
     
     try:
         from store.models import Order
-        order = Order.objects.get(transaction_id=transaction_id)
-        order.status = 'Paid' # Update your status field
+        # Change 'transaction_id' to 'id' here
+        order = Order.objects.get(id=order_id) 
+        
+        # Mark as paid and update status
+        order.is_paid = True
+        order.status = 'Paid'
         order.save()
 
-        # --- STEP 2: SEND ORDER CONFIRMATION EMAIL ---
-        subject = f"Order Confirmed - {transaction_id}"
-        message = f"Hi {order.user.username},\n\nThank you for shopping with Dhaka Threads! We've received your payment.\n\nTransaction ID: {transaction_id}\nTotal Amount: {order.total_amount}\n\nYou can track your order status in your dashboard."
-        
-        send_mail(
-            subject,
-            message,
-            settings.EMAIL_HOST_USER, # Your Gmail/SMTP email
-            [order.user.email],       # The customer's email
-            fail_silently=False,
-        )
-        print(f"Confirmation email sent to {order.user.email}")
+        # ... (Step 2 Email logic here) ...
 
-    except Order.DoesNotExist:
-        print("Order not found for this transaction.")
-    
-    # (Step 1 Redirect will go here later)
-    return Response({"message": "Payment processed and email sent."})
-    
+    except (Order.DoesNotExist, ValueError):
+        # Handle case where order_id isn't a valid number or not in DB
+        return Response({"error": "Order not found"}, status=404)
+
+    # Step 1: Redirect back to React
+    return redirect(f"https://your-react-app.vercel.app/payment/success?tran_id={order_id}")
 
 @csrf_exempt
 @api_view(['POST', 'GET'])
