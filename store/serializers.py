@@ -33,11 +33,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = "__all__"
 
-
 class OrderItemSerializer(serializers.ModelSerializer):
+    # Use an explicit PrimaryKeyRelatedField to bypass hidden validation issues
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+
     class Meta:
         model = OrderItem
-        
         fields = ['product', 'quantity']
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -61,15 +62,7 @@ class OrderSerializer(serializers.ModelSerializer):
             OrderItem.objects.create(order=order, **item_data)
             
         return order
-# serializers.py
-class OrderSerializer(serializers.ModelSerializer):
-    # This tells DRF: "Don't expect this in the React POST body, 
-    # the backend will handle it."
-    user = serializers.ReadOnlyField(source='user.username') 
-
-    class Meta:
-        model = Order
-        fields = ['id', 'user', 'total_amount', 'address', 'full_name', 'items', 'created_at']        
+      
 from .models import Wishlist
 
 
