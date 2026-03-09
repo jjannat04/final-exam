@@ -1,4 +1,5 @@
 from django.urls import path
+from . import api_views
 from .api_views import (
     ProductListAPI,
     ProductDetailAPI,
@@ -28,5 +29,10 @@ urlpatterns = [
     path("wishlist/", WishlistAPI.as_view(), name="wishlist"),
 
     path("products/<int:pk>/related/",RelatedProductsAPI.as_view(),name="related-products"),
+
+    path("create-payment/", api_views.create_payment),
+    path("payment/success/", api_views.payment_success),
+    path("payment/fail/", api_views.payment_fail),
+    path("payment/cancel/", api_views.payment_cancel),
 
 ]

@@ -1,3 +1,6 @@
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from rest_framework import generics, permissions
 from rest_framework.permissions import AllowAny
 from .models import Product, Review, Order
@@ -27,6 +30,7 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
+
 
 
 class AdminDashboardAPI(APIView):
@@ -285,5 +289,80 @@ class RelatedProductsAPI(generics.ListAPIView):
             category=product.category
         ).exclude(id=product_id)[:5]
 
+import requests
+from django.conf import settings
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
+@api_view(["POST"])
+def create_payment(request):
+
+    order_id = request.data.get("order_id")
+    total_amount = request.data.get("total_amount")
+
+    tran_id = f"ORDER_{order_id}"
+
+    data = {
+        "store_id": settings.SSLCOMMERZ_STORE_ID,
+        "store_passwd": settings.SSLCOMMERZ_STORE_PASS,
+
+        "total_amount": total_amount,
+        "currency": "BDT",
+
+        "tran_id": tran_id,
+
+        "success_url": "https://final-exam-delta-two.vercel.app/api/payment/success/",
+        "fail_url": "https://final-exam-delta-two.vercel.app/api/payment/fail/",
+        "cancel_url": "https://final-exam-delta-two.vercel.app/api/payment/cancel/",
+
+        "cus_name": "Customer",
+        "cus_email": "customer@email.com",
+        "cus_phone": "01700000000",
+
+        "product_name": "Dhaka Threads Order",
+        "product_category": "Clothing",
+        "product_profile": "general",
+
+        "shipping_method": "NO",
+        "num_of_item": 1,
+    }
+
+    response = requests.post(
+        "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
+        data=data
+    )
+
+    payment_data = response.json()
+
+    return Response({
+        "gateway_url": payment_data["GatewayPageURL"]
+    })
+
+@api_view(["POST"])
+def payment_success(request):
+
+    tran_id = request.data.get("tran_id")
+
+    try:
+        order_id = tran_id.split("_")[1]
+
+        from .models import Order
+        order = Order.objects.get(id=order_id)
+
+        order.status = "PAID"
+        order.save()
+
+    except Exception as e:
+        return Response({"error": str(e)})
+
+    return Response({"message": "Payment successful"})
+
+
+@api_view(["POST"])
+def payment_fail(request):
+    return Response({"message": "Payment failed"})
+
+@api_view(["POST"])
+def payment_cancel(request):
+    return Response({"message": "Payment cancelled"})    
