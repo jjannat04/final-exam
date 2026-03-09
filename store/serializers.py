@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Avg
 from .models import User, Product, Category, Review, Order, OrderItem
 
 
@@ -14,18 +15,22 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-from django.db.models import Avg
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
     average_rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = "__all__"
+        fields = '__all__' # Or list your specific fields
 
     def get_average_rating(self, obj):
-        return obj.reviews.aggregate(avg=Avg("rating"))["avg"]
+        # This looks at all related reviews and calculates the average 'rating'
+        average = obj.reviews.aggregate(Avg('rating'))['rating__avg']
+        return round(average, 1) if average else 0
+
+    def get_review_count(self, obj):
+        return obj.reviews.count()
 
 
 class ReviewSerializer(serializers.ModelSerializer):

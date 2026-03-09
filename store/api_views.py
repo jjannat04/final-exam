@@ -419,7 +419,7 @@ def payment_success(request):
     order.status = "Paid"
     order.save()
     send_mail(
-    subject=f"Order Confirmed - Dhaka Threads #{order.id}",
+    subject=f"Payment Received - Dhaka Threads #{order.id}",
     message=f"Hi {order.user.username},\n\nPayment received! Your order #{order.id} is now being processed.",
     from_email=settings.EMAIL_HOST_USER,
     recipient_list=[order.user.email],
