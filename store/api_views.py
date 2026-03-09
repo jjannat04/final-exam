@@ -400,3 +400,8 @@ from rest_framework.response import Response
 def payment_fail(request):
     # This matches the path in your store/urls.py
     return Response({"status": "failed", "message": "Payment was not successful."})    
+
+@api_view(['POST', 'GET'])
+def payment_cancel(request):
+    # This can redirect to a 'cancelled' page on your React frontend
+    return Response({"status": "cancelled", "message": "Payment was cancelled by the user."})
