@@ -1,4 +1,5 @@
-from rest_framework import generics, permissions, AllowAny
+from rest_framework import generics, permissions
+from rest_framework.permissions import AllowAny
 from .models import Product, Review, Order
 from .serializers import ProductSerializer, ReviewSerializer, OrderSerializer
 from django.contrib.auth import get_user_model
