@@ -5,23 +5,15 @@ from .models import User, Product, Category, Review, Order, OrderItem
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-
-
-
-from django.contrib.auth.models import User
-from rest_framework import serializers
-
 class UserSerializer(serializers.ModelSerializer):
-    # We define these explicitly to stop DRF from 
-    # inspecting the Model relationships for these fields.
-    username = serializers.ReadOnlyField()
-    email = serializers.ReadOnlyField()
-    first_name = serializers.CharField(required=False, allow_blank=True)
-    last_name = serializers.CharField(required=False, allow_blank=True)
-
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        # Adding first_name and last_name for a better profile experience
+        fields = ["id", "username", "email", "first_name", "last_name"]
+        
+        # Keep username and email read-only so they don't change login data here
+        read_only_fields = ["username", "email"]
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
