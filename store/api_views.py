@@ -190,23 +190,23 @@ class ProductReviewsAPI(generics.ListAPIView):
         product_id = self.kwargs.get("pk")
         return Review.objects.filter(product_id=product_id)
 
-
 class RegisterAPI(APIView):
-    """
-    Register a new user and send email activation link
-    """
-
     def post(self, request):
+        print("--- Registration Started ---") # Check 1
         User = get_user_model()
 
         username = request.data.get("username")
         email = request.data.get("email")
         password = request.data.get("password")
+        
+        print(f"Data received: {username}, {email}") # Check 2
 
         if not username or not email or not password:
+            print("Error: Missing fields")
             return Response({"error": "Missing fields"}, status=400)
 
         if User.objects.filter(username=username).exists():
+            print("Error: User exists")
             return Response({"error": "Username already exists"}, status=400)
 
         user = User.objects.create_user(
@@ -215,26 +215,30 @@ class RegisterAPI(APIView):
             password=password,
             is_active=False
         )
+        print(f"User created: {user.username}") # Check 3
 
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
+        frontend_url = "https://dhaka-threads-client.vercel.app"
+        activation_link = f"{frontend_url}/activate/{uid}/{token}/"
 
-        activation_link = f"{request.scheme}://{request.get_host()}/api/activate/{uid}/{token}/"
-
-        send_mail(
-            "Activate your Dhaka Threads account",
-            f"Click this link to activate your account:\n{activation_link}",
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False
-        )
+        print("Attempting to send mail...") # Check 4
+        try:
+            send_mail(
+                "Activate your Dhaka Threads account",
+                f"Click this link to activate your account:\n{activation_link}",
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False
+            )
+            print("Mail function finished execution.") # Check 5
+        except Exception as e:
+            print(f"MAIL ERROR: {e}")
 
         return Response(
             {"message": "User registered. Check email to activate account."},
             status=status.HTTP_201_CREATED
-        )    
-
-
+        )
 class LoginAPI(APIView):
     """
     Login user
