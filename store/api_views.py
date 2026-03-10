@@ -191,6 +191,7 @@ class ProductReviewsAPI(generics.ListAPIView):
         return Review.objects.filter(product_id=product_id)
 
 class RegisterAPI(APIView):
+    permission_classes = [permissions.AllowAny]
     def post(self, request):
         print("--- Registration Started ---") # Check 1
         User = get_user_model()
